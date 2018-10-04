@@ -4,20 +4,37 @@
 #include <Eigen/Dense>
 
 
-Napi::String run(Napi::CallbackInfo const& callback) {
-    using Eigen::MatrixXd;
-    using std::ostringstream;
+void console_log(Napi::Env env, std::initializer_list<napi_value> const& values) {
+    using Napi::Function;
 
-    MatrixXd matrix = MatrixXd::Random(2, 2);
+    auto console = env.Global().Get("console").ToObject();
+    auto log = console.Get("log").As<Function>();
+    log.Call(console, values);
+}
+
+void run(Napi::CallbackInfo const& callback) {
+    using Eigen::Matrix;
+    using Napi::String;
+    using std::ostringstream;
+    using std::string;
+
+    auto A = Matrix<int, 2, 1>::Random();
+    auto B = Matrix<int, 1, 2>::Random();
+    auto C = A * B;
+
     ostringstream os;
-    os << matrix;
+    os << C;
+    string output = os.str();
 
     auto env = callback.Env();
-    return Napi::String::New(env, os.str());
+    console_log(env, { String::New(env, output) });
 }
 
 Napi::Object init(Napi::Env env, Napi::Object exports) {
-    exports.Set(Napi::String::New(env, "run"), Napi::Function::New(env, run));
+    using Napi::String;
+    using Napi::Function;
+
+    exports.Set(String::New(env, "run"), Function::New(env, run));
     return exports;
 }
 
